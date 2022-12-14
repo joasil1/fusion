@@ -236,11 +236,14 @@ while True:
                 KF.predict(track)
                 track.set_t((cnt_frame - 1)*0.1) # save next timestamp
                 
+            
+            BEV_box = [configs_det.lim_x[0], configs_det.lim_x[1], configs_det.lim_y[0], configs_det.lim_y[1]]
+            #
             # associate all lidar measurements to all tracks
-            association.associate_and_update(manager, meas_list_lidar, KF)
+            association.associate_and_update(manager, meas_list_lidar, KF, BEV_box)
             
             # associate all camera measurements to all tracks
-            association.associate_and_update(manager, meas_list_cam, KF)
+            association.associate_and_update(manager, meas_list_cam, KF, BEV_box)
             
             # save results for evaluation
             result_dict = {}
