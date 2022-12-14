@@ -111,7 +111,7 @@ class Trackmanagement:
         self.last_id = -1
         self.result_list = []
         
-    def manage_tracks(self, unassigned_tracks, unassigned_meas, meas_list):  
+    def manage_tracks(self, unassigned_tracks, unassigned_meas, meas_list, BEV_box):  
         ############
         # TODO Step 2: implement track management:
         # - decrease the track score for unassigned tracks
@@ -122,8 +122,10 @@ class Trackmanagement:
         # decrease score for unassigned tracks
         for i in unassigned_tracks:
             track = self.track_list[i]
-            print("track.P", track.P[0,0], track.P[1,1])
             # check visibility    
+            if (track.x[0] < BEV_box[0] or track.x[0] > BEV_box[1] or track.x[1] < BEV_box[2] or track.x[1] > BEV_box[3]):
+                print("track out of Scope, will reduce weight")
+                track.score = track.score - 3.0/params.window
             if meas_list: # if not empty
                 if meas_list[0].sensor.in_fov(track.x):
                     # your code goes here
@@ -134,12 +136,18 @@ class Trackmanagement:
 
         # delete old tracks
         for track in self.track_list:
-            if track.state == 'confirmed':
-                if track.score < params.delete_threshold:
-                    self.delete_track(track)
+            if track.id == 7:
+                print(20*"=")
+                print("track.P", track.P[0,0], track.P[1,1])
+            if (track.P[0,0] > params.max_P or track.P[1,1] > params.max_P):
+                self.delete_track(track)
             else:
-                if track.P[0,0] > params.max_P or track.P[1,1] > params.max_P or track.score < 0.0:
-                    self.delete_track(track)
+                if track.state == 'confirmed':
+                    if track.score < params.delete_threshold:
+                        self.delete_track(track)
+                else:
+                    if track.score < 0.0:
+                        self.delete_track(track)
 
         ############
         # END student code

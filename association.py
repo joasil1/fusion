@@ -30,7 +30,7 @@ class Association:
         self.unassigned_tracks = []
         self.unassigned_meas = []
         
-    def associate(self, track_list, meas_list):
+    def associate(self, track_list, meas_list, KF):
              
         ############
         # TODO Step 3: association:
@@ -50,8 +50,7 @@ class Association:
             track = track_list[i]
             for j in range(M):
                 meas = meas_list[j]
-                dist = self.MHD(track, meas)
-                print(dist)
+                dist = self.MHD(track, meas, KF)
                 if self.gating(dist):
                     self.association_matrix[i,j] = dist
         
@@ -113,20 +112,18 @@ class Association:
         # END student code
         ############ 
         
-    def MHD(self, track, meas):
+    def MHD(self, track, meas, KF):
         ############
         # TODO Step 3: calculate and return Mahalanobis distance
         ############
         
         x = track.x
         P = track.P
-        H = meas.sensor.get_H(x)
-        hx = meas.sensor.get_hx(x)
-        z = meas.z
-        R = meas.R
+        H = meas.sensor.get_H(x) # measurement matrix
         #
-        gamma = z - hx
-        S = H*P*H.transpose() + R
+        gamma = KF.gamma(track, meas)
+        S = KF.S(track, meas, H)
+        #
         MHD = gamma.transpose()*np.linalg.inv(S)*gamma # Mahalanobis distance formula
 
         return MHD
@@ -135,13 +132,10 @@ class Association:
         # END student code
         ############ 
     
-    def associate_and_update(self, manager, meas_list, KF):
+    def associate_and_update(self, manager, meas_list, KF, BEV_box):
         # associate measurements and tracks
-        print(meas_list)
-        self.associate(manager.track_list, meas_list)
+        self.associate(manager.track_list, meas_list, KF)
     
-        print("self.association_matrix")
-        print(self.association_matrix)
         # update associated tracks with measurements
         while self.association_matrix.shape[0]>0 and self.association_matrix.shape[1]>0:
             
@@ -168,7 +162,7 @@ class Association:
             manager.track_list[ind_track] = track
             
         # run track management 
-        manager.manage_tracks(self.unassigned_tracks, self.unassigned_meas, meas_list)
+        manager.manage_tracks(self.unassigned_tracks, self.unassigned_meas, meas_list, BEV_box)
         
         for track in manager.track_list:            
             print('track', track.id, 'score =', track.score)

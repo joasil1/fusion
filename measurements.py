@@ -50,8 +50,9 @@ class Sensor:
         
         pos_veh = np.ones((4, 1)) # homogeneous coordinates
         pos_veh[0:3] = x[0:3] 
-        pos_sens = self.veh_to_sens*pos_veh # transform from vehicle to sensor coordinates
+
         visible = False
+        pos_sens = self.veh_to_sens*pos_veh # transform from vehicle to sensor coordinates
         # make sure to not divide by zero - we can exclude the whole negative x-range here
         if pos_sens[0] > 0: 
             alpha = np.arctan(pos_sens[1]/pos_sens[0]) # calc angle between object and x-axis
@@ -141,7 +142,6 @@ class Sensor:
         ############
         
         if self.name != 'none':
-            print("generating camera measu")
             meas = Measurement(num_frame, z, self)
             meas_list.append(meas)
         return meas_list
@@ -182,8 +182,9 @@ class Measurement:
             self.z = np.zeros((sensor.dim_meas,1)) # measurement vector
             self.z[0] = z[0]
             self.z[1] = z[1]
-            self.width = z[2]
-            self.length = z[3]
+            #
+            # other 2 z params not needed because they cannot be translated to a vehicle width/height/length
+            #
             self.sensor = sensor # sensor that generated this measurement
             self.R = np.matrix([[params.sigma_cam_i**2, 0], # measurement noise covariance matrix
                                 [0, params.sigma_cam_j**2]])
